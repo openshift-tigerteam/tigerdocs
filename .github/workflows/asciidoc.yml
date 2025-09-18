@@ -2,7 +2,7 @@ name: Build and Deploy AsciiDoc
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]  # change if your default branch is different
 
 jobs:
   build:
@@ -11,27 +11,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Asciidoctor
-        run: sudo apt-get update && sudo apt-get install -y asciidoctor asciidoctor-diagram
+      - name: Install Asciidoctor and Diagram Extension
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y asciidoctor ruby ruby-dev build-essential
+          sudo gem install asciidoctor-diagram
 
       - name: Build HTML from AsciiDoc
         run: |
-          # Clean build folder
           rm -rf build
           mkdir -p build
 
-          # Find all .adoc files recursively
+          # Recursively find and convert all .adoc files
           find . -name '*.adoc' -type f | while read file; do
-            # Remove leading ./ from file path
             relative_path="${file#./}"
-
-            # Determine output directory in build folder
             output_dir="build/$(dirname "$relative_path")"
             mkdir -p "$output_dir"
-
-            # Convert to HTML preserving folder structure
             asciidoctor -r asciidoctor-diagram -D "$output_dir" "$file"
           done
+
+          # Generate a simple index.html listing all HTML files
+          INDEX_FILE="build/index.html"
+          echo "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Docs Index</title></head><body><h1>Documentation</h1><ul>" > $INDEX_FILE
+          find build -name '*.html' | while read htmlfile; do
+            [ "$htmlfile" = "$INDEX_FILE" ] && continue
+            href="${htmlfile#build/}"
+            # Remove .html extension for cleaner display
+            display_name="${href%.html}"
+            echo "<li><a href=\"$href\">$display_name</a></li>" >> $INDEX_FILE
+          done
+          echo "</ul></body></html>" >> $INDEX_FILE
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
