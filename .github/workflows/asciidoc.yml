@@ -1,0 +1,40 @@
+name: Build and Deploy AsciiDoc
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Asciidoctor
+        run: sudo apt-get update && sudo apt-get install -y asciidoctor asciidoctor-diagram
+
+      - name: Build HTML from AsciiDoc
+        run: |
+          # Clean build folder
+          rm -rf build
+          mkdir -p build
+
+          # Find all .adoc files recursively
+          find . -name '*.adoc' -type f | while read file; do
+            # Remove leading ./ from file path
+            relative_path="${file#./}"
+
+            # Determine output directory in build folder
+            output_dir="build/$(dirname "$relative_path")"
+            mkdir -p "$output_dir"
+
+            # Convert to HTML preserving folder structure
+            asciidoctor -r asciidoctor-diagram -D "$output_dir" "$file"
+          done
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build

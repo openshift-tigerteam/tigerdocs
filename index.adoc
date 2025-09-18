@@ -1,0 +1,24 @@
+= Hello World
+Stephen <stephen@example.com>
+:doctype: article
+:toc: left
+:icons: font
+
+== Introduction
+
+This is a **Hello World** page generated from AsciiDoc.
+
+You can add lists, code blocks, images, and more.
+
+== Example List
+
+* Item 1
+* Item 2
+* Item 3
+
+== Code Example
+
+[source,python]
+----
+print("Hello, world!")
+----
